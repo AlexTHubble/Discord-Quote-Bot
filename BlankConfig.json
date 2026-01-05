@@ -1,0 +1,4 @@
+{
+  "_ToUse": "In order to use this file, rename to Config.json and remove this variable. Config file is not stored in git to avoid leaking sensitive information",
+  "token": ""
+}
