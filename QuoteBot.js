@@ -2,8 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { token } = require('./config.json');
-const { quotes } = require('./Quotes.json');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+const { quotes } = require('./Quotes.json');
 
 //Loads the command files from the folder
 client.commands = new Collection();
@@ -34,23 +35,23 @@ for (const file of eventFiles) {
         client.on(event.name, (...args) => event.execute(...args));
     }
 }
-/*
 
-let testQuote = {
+/*let testQuote = {
     user: "alex",
-    quote: "lol penis",
+    quote: "funny joke",
     quotedBy: "jamie"
 }
 
 quotes.push(testQuote);
 
-fs.writeFile('Quotes.json', JSON.stringify(quotes), 'utf8', (err) => {
+let quoteOutput = {"quotes": quotes};
+
+fs.writeFile('Quotes.json', JSON.stringify(quoteOutput), 'utf8', (err) => {
     if (err) {
         console.error(err);
         return;
     }
     console.log('Successfully written Quotes.json');
-});
-*/
+});*/
 
 client.login(token);
