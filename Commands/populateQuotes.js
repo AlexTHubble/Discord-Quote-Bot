@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, TextBasedChannel, ChannelManager } = require("discord.js");
-const { quotes } = require(`../Quotes.json`);
+//const { quotes } = require(`../Quotes.json`);
 const fs = require('node:fs');
 
 
@@ -23,52 +23,66 @@ module.exports = {
         const targetChannel = interaction.options.getChannel('setchannel');
         let channel = await interaction.client.channels.fetch(targetChannel.id)
 
-        let messages = [];
-        let chatQuotes = []
-
-        let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
-
-
-        while (message) {
-            await channel.messages
-                .fetch({ limit: 100, before: message.id })
-                .then(messagePage => {
-                    messagePage.forEach(
-                        msg => messages.push(msg));
-
-                    // Update our message pointer to be the last message on the page of messages
-                    message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
-                });
+        if(proceedConformation !== "yes")
+        {
+            await interaction.reply(`Aborting process`);
         }
+        else
+        {
+            let messages = [];
 
-        for(const message of messages) {
-            if(message.content.includes('"') && message.mentions.users.size > 0)
-            {
-                let outPut = {
-                    quotedUser: "",
-                    quote: "",
-                    quotedBy: ""
+            let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
+
+
+            while (message) {
+                await channel.messages
+                    .fetch({ limit: 100, before: message.id })
+                    .then(messagePage => {
+                        messagePage.forEach(
+                            msg => messages.push(msg));
+
+                        // Update our message pointer to be the last message on the page of messages
+                        message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
+                    });
+            }
+
+            let quotes = [];
+            for(const message of messages) {
+                if(message.content.includes('"') && message.mentions.users.size > 0)
+                {
+                    let outPut = {
+                        quotedUser: "",
+                        quote: "",
+                        quotedBy: ""
+                    }
+
+                    let quote = message.content;
+                    quote = quote.substring(quote.indexOf('"'), quote.indexOf('<'))
+                    quote = quote.replaceAll('"', '');
+
+                    outPut.quote = quote;
+                    outPut.quotedUser = message.mentions.users.entries().next().value[1].username
+                    outPut.quotedBy = message.author.globalName;
+
+
+                    quotes.push(outPut);
+
                 }
 
-                outPut.quotedUser = message.mentions.users.entries().next().value[1].username
-                outPut.quotedBy = message.author.globalName;
-                outPut.quote = message.content;
+            }
 
+            let quoteOutput = {"quotes": quotes};
 
-                quotes.push(outPut);
+            fs.writeFile('Quotes.json', JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log('Successfully written Quotes.json');
+            });
 
-                let quoteOutput = {"quotes": quotes};
-
-                fs.writeFile('Quotes.json', JSON.stringify(quoteOutput), 'utf8', (err) => {
-                    if (err) {
-                        console.error(err);
-                        return;
-                    }
-                    console.log('Successfully written Quotes.json');
-                });            }
-
+            await interaction.reply(`Finished populating quote json`);
         }
-        await interaction.reply(`Finished populating quote json`);
     },
 };
 
