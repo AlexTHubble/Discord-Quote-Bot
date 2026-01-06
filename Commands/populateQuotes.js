@@ -1,4 +1,7 @@
 const { SlashCommandBuilder, ChannelType, TextBasedChannel, ChannelManager } = require("discord.js");
+const { quotes } = require(`../Quotes.json`);
+const fs = require('node:fs');
+
 
 module.exports = {
     data: new SlashCommandBuilder().setName('populatequotejson')
@@ -21,7 +24,7 @@ module.exports = {
         let channel = await interaction.client.channels.fetch(targetChannel.id)
 
         let messages = [];
-
+        let chatQuotes = []
 
         let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
 
@@ -30,17 +33,41 @@ module.exports = {
             await channel.messages
                 .fetch({ limit: 100, before: message.id })
                 .then(messagePage => {
-                    messagePage.forEach(msg => messages.push(msg));
+                    messagePage.forEach(
+                        msg => messages.push(msg));
 
                     // Update our message pointer to be the last message on the page of messages
                     message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
                 });
-
-
         }
 
-        console.log(messages);
+        for(const message of messages) {
+            if(message.content.includes('"') && message.mentions.users.size > 0)
+            {
+                let outPut = {
+                    quotedUser: "",
+                    quote: "",
+                    quotedBy: ""
+                }
 
+                outPut.quotedUser = message.mentions.users.entries().next().value[1].username
+                outPut.quotedBy = message.author.globalName;
+                outPut.quote = message.content;
+
+
+                quotes.push(outPut);
+
+                let quoteOutput = {"quotes": quotes};
+
+                fs.writeFile('Quotes.json', JSON.stringify(quoteOutput), 'utf8', (err) => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                    console.log('Successfully written Quotes.json');
+                });            }
+
+        }
         await interaction.reply(`Finished populating quote json`);
     },
 };
