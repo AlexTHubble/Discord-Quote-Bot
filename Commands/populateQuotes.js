@@ -29,6 +29,7 @@ module.exports = {
         }
         else
         {
+            console.log("Starting scrub")
             let messages = [];
 
             let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
@@ -45,7 +46,7 @@ module.exports = {
                         message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
                     });
             }
-
+            console.log("Acquired messages, sorting for quotes")
             let quotes = [];
             for(const message of messages) {
                 if(message.content.includes('"') && message.mentions.users.size > 0)
@@ -71,6 +72,7 @@ module.exports = {
 
             }
 
+            console.log("Sorted quotes, pushing to json")
             let quoteOutput = {"quotes": quotes};
 
             fs.writeFile('Quotes.json', JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
@@ -81,7 +83,6 @@ module.exports = {
                 console.log('Successfully written Quotes.json');
             });
 
-            await interaction.reply(`Finished populating quote json`);
         }
     },
 };
