@@ -29,11 +29,11 @@ module.exports = {
         }
         else
         {
+            await interaction.reply('Working, this may take a moment')
             console.log("Starting scrub")
             let messages = [];
 
             let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
-
 
             while (message) {
                 await channel.messages
@@ -52,9 +52,9 @@ module.exports = {
                 if(message.content.includes('"') && message.mentions.users.size > 0)
                 {
                     let outPut = {
-                        quotedUser: "",
+                        mentionedUser: "",
                         quote: "",
-                        quotedBy: ""
+                        sentBy: ""
                     }
 
                     let quote = message.content;
@@ -62,12 +62,11 @@ module.exports = {
                     quote = quote.replaceAll('"', '');
 
                     outPut.quote = quote;
-                    outPut.quotedUser = message.mentions.users.entries().next().value[1].username
-                    outPut.quotedBy = message.author.globalName;
+                    outPut.mentionedUser = message.mentions.users.entries().next().value[1].username
+                    outPut.sentBy = message.author.globalName;
 
 
                     quotes.push(outPut);
-
                 }
 
             }

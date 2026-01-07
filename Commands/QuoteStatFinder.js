@@ -1,47 +1,76 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, ChannelType} = require("discord.js");
 const path = require('node:path');
 
 
 module.exports = {
     data: new SlashCommandBuilder().setName('displaystats')
-        .setDescription('Display stats about quotes'),
+        .setDescription('Display stats about quotes')
+        .addChannelOption(option =>
+            option.setName('outputchannel')
+                .setDescription('What channel should be the data be output to?')
+                .setRequired(true)
+                .addChannelTypes(ChannelType.GuildText)
+        ),
     async execute(interaction)
     {
+        await interaction.reply('Working, this may take a moment')
+
+        const outPutChannelOption = interaction.options.getChannel('outputchannel');
+        const outPutChannel = await interaction.client.channels.fetch(outPutChannelOption.id)
         const jsonPath = path.join(__dirname, '..', 'Quotes.json')
-        let quotes = require(jsonPath);
-        let hasQuotedCount = [];
+        let quoteJson = require(jsonPath);
+        let hasQuotedCounts = [];
         let hasBeenQuotedCounts = [];
 
-        for(const quote of quotes)
+        for(const quote of quoteJson.quotes)
         {
             let hasQuoted = false;
-            for(const user in hasQuotedCount)
-            {
-                if(user.name === quote.quotedBy)
+            hasQuotedCounts.forEach(count => {
+                if(count.name === quote.sentBy)
                 {
                     hasQuoted = true;
-                    user.count++;
+                    count.count++;
                 }
-            }
-            if(!hasQuoted)
-                hasQuotedCount.push({name:quote.quotedUser, count:1})
 
+            })
+            if(!hasQuoted)
+                hasQuotedCounts.push({name:quote.sentBy, count:1})
             let hasBeenQuoted = false;
-            for(const user in hasBeenQuotedCounts)
-            {
-                if(user.name === quote.quotedBy)
+
+            hasBeenQuotedCounts.forEach(count => {
+                if(count.name === quote.mentionedUser)
                 {
                     hasBeenQuoted = true;
-                    user.count++;
+                    count.count++;
                 }
-            }
+
+            })
             if(!hasBeenQuoted)
-                hasBeenQuotedCounts.push({name:quote.quotedUser, count:1})
+                hasBeenQuotedCounts.push({name:quote.mentionedUser, count:1})
 
         }
 
+
+        hasBeenQuotedCounts.sort((a, b) => b.count - a.count)
+        hasQuotedCounts.sort((a, b) => b.count - a.count)
+
+        outPutChannel.send('**SPAMMING CHANNEL WITH QUOTE STATS PLEASE HOLD**')
+
+        outPutChannel.send('------------QUOTED COUNTS------------')
+        hasBeenQuotedCounts.forEach(count => {
+            outPutChannel.send(`User: **${count.name}** | Times user has been quoted: *${count.count}*`)
+        })
+
+        outPutChannel.send('------------HAS QUOTED COUNTS------------')
+        hasQuotedCounts.forEach(count => {
+            outPutChannel.send(`User: **${count.name}** | Times user has quoted others: *${count.count}*`)
+        })
+
+        outPutChannel.send('**ITS SAFE TO TALK AGAIN**')
+
+
         console.log(hasBeenQuotedCounts);
-        console.log(hasQuotedCount);
+        console.log(hasQuotedCounts);
     },
 };
 
