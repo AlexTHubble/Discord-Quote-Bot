@@ -6,11 +6,6 @@ const fs = require('node:fs');
 module.exports = {
     data: new SlashCommandBuilder().setName('populatequotejson')
         .setDescription('Populates the quote json with all existing quotes.')
-        .addStringOption((option) =>
-            option.setName('proceedcommand')
-                .setDescription('WARNING: this will wipe the previous data, proceed?')
-                .setRequired(true)
-                .addChoices({ name: 'yes', value: 'yes'}, { name: 'no', value: 'no'}))
         .addChannelOption((option) =>
             option.setName('setchannel')
                 .setDescription('Choose a channel to scrub')
@@ -19,77 +14,71 @@ module.exports = {
         ),
     async execute(interaction)
     {
-        const proceedConformation = interaction.options.getString('proceedcommand');
         const targetChannel = interaction.options.getChannel('setchannel');
         let channel = await interaction.client.channels.fetch(targetChannel.id)
 
-        if(proceedConformation !== "yes")
-        {
-            await interaction.reply(`Aborting process`);
+        await interaction.reply('Working, this may take a moment')
+        console.log("Starting scrub")
+        let messages = [];
+
+        let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
+
+        while (message) {
+            await channel.messages
+                .fetch({ limit: 100, before: message.id })
+                .then(messagePage => {
+                    messagePage.forEach(
+                        msg => messages.push(msg));
+
+                    // Update our message pointer to be the last message on the page of messages
+                    message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
+                });
         }
-        else
-        {
-            await interaction.reply('Working, this may take a moment')
-            console.log("Starting scrub")
-            let messages = [];
+        console.log("Acquired messages, sorting for quotes")
+        for(const message of messages) {
+            if(message.content.includes('"') && message.mentions.users.size > 0)
+            {
+                let outPut = {
+                    mentionedUser: "",
+                    quote: "",
+                    sentBy: "",
+                    cringeRank: 0,
+                    funnyRank: 0
+                }
 
-            let message = await channel.messages.fetch({limit: 1}).then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null))
+                let quote = message.content;
+                quote = quote.substring(quote.indexOf('"'), quote.indexOf('<'))
+                quote = quote.replaceAll('"', '');
 
-            while (message) {
-                await channel.messages
-                    .fetch({ limit: 100, before: message.id })
-                    .then(messagePage => {
-                        messagePage.forEach(
-                            msg => messages.push(msg));
+                outPut.quote = quote;
+                outPut.mentionedUser = message.mentions.users.entries().next().value[1].globalName
+                outPut.sentBy = message.author.globalName;
 
-                        // Update our message pointer to be the last message on the page of messages
-                        message = 0 < messagePage.size ? messagePage.at(messagePage.size - 1) : null;
-                    });
-            }
-            console.log("Acquired messages, sorting for quotes")
-            for(const message of messages) {
-                if(message.content.includes('"') && message.mentions.users.size > 0)
+                if(typeof quotes[outPut.quote].cringeRank !== 'undefined'
+                    && typeof quotes[outPut.quote].funnyRank !== 'undefined')
                 {
-                    let outPut = {
-                        mentionedUser: "",
-                        quote: "",
-                        sentBy: "",
-                        cringeRank: 0,
-                        funnyRank: 0
-                    }
-
-                    let quote = message.content;
-                    quote = quote.substring(quote.indexOf('"'), quote.indexOf('<'))
-                    quote = quote.replaceAll('"', '');
-
-                    outPut.quote = quote;
-                    outPut.mentionedUser = message.mentions.users.entries().next().value[1].username
-                    outPut.sentBy = message.author.globalName;
-
-                    if(typeof quotes[outPut.quote].cringeRank !== 'undefined'
-                        && typeof quotes[outPut.quote].funnyRank !== 'undefined')
-                    {
-                        outPut.cringeRank = quotes[outPut.quote].cringeRank
-                        outPut.funnyRank = quotes[outPut.quote].funnyRank
-                    }
-
-                    quotes[outPut.quote] = outPut;
+                    outPut.cringeRank = quotes[outPut.quote].cringeRank
+                    outPut.funnyRank = quotes[outPut.quote].funnyRank
                 }
 
+                quotes[outPut.quote] = outPut;
             }
 
-            console.log("Sorted quotes, pushing to json")
-            let quoteOutput = {"quotes": quotes};
-
-            fs.writeFile('Quotes.json', JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                console.log('Successfully written Quotes.json');
-            });
-
         }
+
+        console.log("Sorted quotes, pushing to json")
+        let quoteOutput = {"quotes": quotes};
+
+        fs.writeFile(`../Data/Quotes.json`, JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            console.log('Successfully written Quotes.json');
+        });
+
+
+
     },
 };
 

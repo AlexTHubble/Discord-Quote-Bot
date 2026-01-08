@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, ChannelType} = require("discord.js");
 const path = require('node:path');
+const fs = require("node:fs");
 
+const dataPath = path.join(__dirname, '..', 'Data',);
 
 module.exports = {
     data: new SlashCommandBuilder().setName('displaystats')
@@ -17,41 +19,63 @@ module.exports = {
 
         const outPutChannelOption = interaction.options.getChannel('outputchannel');
         const outPutChannel = await interaction.client.channels.fetch(outPutChannelOption.id)
-        const jsonPath = path.join(__dirname, '..', 'Data', 'Quotes.json')
-        let quoteJson = require(jsonPath);
+        let quoteJson = require(path.join(dataPath, 'Quotes.json'));
+        const statsJson = require(path.join(dataPath, 'UserStats.json'));
         let hasQuotedCounts = [];
         let hasBeenQuotedCounts = [];
 
         for(const key in quoteJson.quotes)
         {
-            let hasQuoted = false;
-            hasQuotedCounts.forEach(count => {
-                if(count.name === quoteJson.quotes[key].sentBy)
+            let userMentioned = false;
+            let userSent = false;
+            for(const user in statsJson.users)
+            {
+                //Sent by
+                if(user === quoteJson.quotes[key].sentBy)
                 {
-                    hasQuoted = true;
-                    count.count++;
+                    statsJson.users[user].sentByCount++;
+                    userSent = true;
                 }
 
-            })
-            if(!hasQuoted)
-                hasQuotedCounts.push({name:quoteJson.quotes[key].sentBy, count:1})
-            let hasBeenQuoted = false;
-
-            hasBeenQuotedCounts.forEach(count => {
-                if(count.name === quoteJson.quotes[key].mentionedUser)
+                if(user === quoteJson.quotes[key].mentionedUser)
                 {
-                    hasBeenQuoted = true;
-                    count.count++;
+                    statsJson.users[user].quotedCount++;
+                    userMentioned = true;
                 }
-
-            })
-            if(!hasBeenQuoted)
-                hasBeenQuotedCounts.push({name:quoteJson.quotes[key].mentionedUser, count:1})
-
+            }
+            //Checks to see if a new user was found, if so initializes that user
+            if(!userSent)
+            {
+                statsJson.users[quoteJson.quotes[key].sentBy] =
+                    {
+                        sentByCount: 1,
+                        quotedCount: 0,
+                        rankedQuotes: {}
+                    }
+            }
+            else if(!userMentioned)
+            {
+                statsJson.users[quoteJson.quotes[key].mentionedUser] =
+                    {
+                        sentByCount: 0,
+                        quotedCount: 1,
+                        rankedQuotes: {}
+                    }
+            }
         }
 
+        console.log("Gathered stats, pushing to json")
+        let userOutput = {"users": statsJson};
 
-        hasBeenQuotedCounts.sort((a, b) => b.count - a.count)
+        fs.writeFile(path.join(dataPath, 'UserStats.json'), JSON.stringify(userOutput, null, '\t'), 'utf8', (err) => {
+            if (err) {
+                console.error(err);
+                return;
+            }
+            console.log('Successfully written UserStats.json');
+        });
+
+       /* hasBeenQuotedCounts.sort((a, b) => b.count - a.count)
         hasQuotedCounts.sort((a, b) => b.count - a.count)
 
         outPutChannel.send('**SPAMMING CHANNEL WITH QUOTE STATS PLEASE HOLD**')
@@ -70,7 +94,7 @@ module.exports = {
 
 
         console.log(hasBeenQuotedCounts);
-        console.log(hasQuotedCounts);
+        console.log(hasQuotedCounts);*/
     },
 };
 
