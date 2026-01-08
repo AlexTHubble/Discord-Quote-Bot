@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, TextBasedChannel, ChannelManager } = require("discord.js");
-//const { quotes } = require(`../Quotes.json`);
+const { quotes } = require(`../Data/Quotes.json`);
 const fs = require('node:fs');
 
 
@@ -47,14 +47,15 @@ module.exports = {
                     });
             }
             console.log("Acquired messages, sorting for quotes")
-            let quotes = [];
             for(const message of messages) {
                 if(message.content.includes('"') && message.mentions.users.size > 0)
                 {
                     let outPut = {
                         mentionedUser: "",
                         quote: "",
-                        sentBy: ""
+                        sentBy: "",
+                        cringeRank: 0,
+                        funnyRank: 0
                     }
 
                     let quote = message.content;
@@ -65,8 +66,14 @@ module.exports = {
                     outPut.mentionedUser = message.mentions.users.entries().next().value[1].username
                     outPut.sentBy = message.author.globalName;
 
+                    if(typeof quotes[outPut.quote].cringeRank !== 'undefined'
+                        && typeof quotes[outPut.quote].funnyRank !== 'undefined')
+                    {
+                        outPut.cringeRank = quotes[outPut.quote].cringeRank
+                        outPut.funnyRank = quotes[outPut.quote].funnyRank
+                    }
 
-                    quotes.push(outPut);
+                    quotes[outPut.quote] = outPut;
                 }
 
             }

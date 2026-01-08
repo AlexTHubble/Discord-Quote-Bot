@@ -17,16 +17,16 @@ module.exports = {
 
         const outPutChannelOption = interaction.options.getChannel('outputchannel');
         const outPutChannel = await interaction.client.channels.fetch(outPutChannelOption.id)
-        const jsonPath = path.join(__dirname, '..', 'Quotes.json')
+        const jsonPath = path.join(__dirname, '..', 'Data', 'Quotes.json')
         let quoteJson = require(jsonPath);
         let hasQuotedCounts = [];
         let hasBeenQuotedCounts = [];
 
-        for(const quote of quoteJson.quotes)
+        for(const key in quoteJson.quotes)
         {
             let hasQuoted = false;
             hasQuotedCounts.forEach(count => {
-                if(count.name === quote.sentBy)
+                if(count.name === quoteJson.quotes[key].sentBy)
                 {
                     hasQuoted = true;
                     count.count++;
@@ -34,11 +34,11 @@ module.exports = {
 
             })
             if(!hasQuoted)
-                hasQuotedCounts.push({name:quote.sentBy, count:1})
+                hasQuotedCounts.push({name:quoteJson.quotes[key].sentBy, count:1})
             let hasBeenQuoted = false;
 
             hasBeenQuotedCounts.forEach(count => {
-                if(count.name === quote.mentionedUser)
+                if(count.name === quoteJson.quotes[key].mentionedUser)
                 {
                     hasBeenQuoted = true;
                     count.count++;
@@ -46,7 +46,7 @@ module.exports = {
 
             })
             if(!hasBeenQuoted)
-                hasBeenQuotedCounts.push({name:quote.mentionedUser, count:1})
+                hasBeenQuotedCounts.push({name:quoteJson.quotes[key].mentionedUser, count:1})
 
         }
 

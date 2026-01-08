@@ -1,0 +1,18 @@
+{
+	"quotes": {
+		"test test test ": {
+			"mentionedUser": "Librarian",
+			"quote": "test test test ",
+			"sentBy": "1D10_crabs",
+			"cringeRank": 1111,
+			"funnyRank": 111
+		},
+		"test test ": {
+			"mentionedUser": "willpower900",
+			"quote": "test test ",
+			"sentBy": "1D10_crabs",
+			"cringeRank": 111,
+			"funnyRank": 1111
+		}
+	}
+}
