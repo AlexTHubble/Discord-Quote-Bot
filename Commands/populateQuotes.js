@@ -1,7 +1,9 @@
 const { SlashCommandBuilder, ChannelType, TextBasedChannel, ChannelManager } = require("discord.js");
-const { quotes } = require(`../Data/Quotes.json`);
 const fs = require('node:fs');
+const path = require("node:path");
 
+const dataPath = path.join(__dirname, '..', 'Data',);
+const { quotes } = require(path.join(dataPath, 'Quotes.json'));
 
 module.exports = {
     data: new SlashCommandBuilder().setName('populatequotejson')
@@ -54,8 +56,9 @@ module.exports = {
                 outPut.mentionedUser = message.mentions.users.entries().next().value[1].globalName
                 outPut.sentBy = message.author.globalName;
 
-                if(typeof quotes[outPut.quote].cringeRank !== 'undefined'
-                    && typeof quotes[outPut.quote].funnyRank !== 'undefined')
+                let isDefined = typeof quotes[outPut.quote];
+                //Checks if we're redefining a quote, if we are take the existing rankings
+                if(isDefined !== "undefined")
                 {
                     outPut.cringeRank = quotes[outPut.quote].cringeRank
                     outPut.funnyRank = quotes[outPut.quote].funnyRank
@@ -69,15 +72,13 @@ module.exports = {
         console.log("Sorted quotes, pushing to json")
         let quoteOutput = {"quotes": quotes};
 
-        fs.writeFile(`../Data/Quotes.json`, JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
+        fs.writeFile( path.join(dataPath, 'Quotes.json'), JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
             if (err) {
                 console.error(err);
                 return;
             }
             console.log('Successfully written Quotes.json');
         });
-
-
 
     },
 };
