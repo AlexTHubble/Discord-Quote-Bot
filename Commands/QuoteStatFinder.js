@@ -40,7 +40,7 @@ module.exports = {
                     {
                         sentByCount: 1,
                         quotedCount: 0,
-                        rankedQuotes: {}
+                        rankedQuotes: []
                     }
             }
             else if(!userMentioned)
@@ -49,7 +49,7 @@ module.exports = {
                     {
                         sentByCount: 0,
                         quotedCount: 1,
-                        rankedQuotes: {}
+                        rankedQuotes: []
                     }
             }
         }

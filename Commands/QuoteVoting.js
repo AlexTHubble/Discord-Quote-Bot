@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+//NOTE: most of the voting logic exists within interactionCreate.js within the Events folder.
+//That's where the bulk of the button logic lives and ergo most of our functionality for voting!
 
 module.exports = {
     data: new SlashCommandBuilder().setName('startvoting').setDescription('Begin voting!'),
