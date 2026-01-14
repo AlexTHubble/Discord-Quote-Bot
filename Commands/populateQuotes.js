@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType, TextBasedChannel, ChannelManager } = require("discord.js");
+const { SlashCommandBuilder, ChannelType} = require("discord.js");
 const fs = require('node:fs');
 const path = require("node:path");
 
@@ -79,7 +79,7 @@ module.exports = {
             }
             console.log('Successfully written Quotes.json');
         });
-
+        await interaction.followUp('Finished');
     },
 };
 

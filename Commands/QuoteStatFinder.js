@@ -1,24 +1,16 @@
-const { SlashCommandBuilder, ChannelType} = require("discord.js");
+const { SlashCommandBuilder} = require("discord.js");
 const path = require('node:path');
 const fs = require("node:fs");
 
 const dataPath = path.join(__dirname, '..', 'Data',);
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('displaystats')
-        .setDescription('Display stats about quotes')
-        .addChannelOption(option =>
-            option.setName('outputchannel')
-                .setDescription('What channel should be the data be output to?')
-                .setRequired(true)
-                .addChannelTypes(ChannelType.GuildText)
-        ),
+    data: new SlashCommandBuilder().setName('gatherstats')
+        .setDescription('Generate the UserStats.json with existing quotes'),
     async execute(interaction)
     {
         await interaction.reply('Working, this may take a moment')
 
-        const outPutChannelOption = interaction.options.getChannel('outputchannel');
-        const outPutChannel = await interaction.client.channels.fetch(outPutChannelOption.id)
         let quoteJson = require(path.join(dataPath, 'Quotes.json'));
         const statsJson = { users: {}}
 
@@ -69,7 +61,10 @@ module.exports = {
                 return;
             }
             console.log('Successfully written UserStats.json');
+
         });
+        await interaction.followUp('Finished');
+
     },
 };
 
