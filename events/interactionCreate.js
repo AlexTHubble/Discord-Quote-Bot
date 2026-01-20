@@ -186,7 +186,7 @@ async function writeToJsonFile(jsonFile, jsonToWrite)
             console.error(err);
             return;
         }
-        console.log('Successfully written Quotes.json');
+        console.log(`Successfully written ${jsonFile}`);
     });
 }
 
