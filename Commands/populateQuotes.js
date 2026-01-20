@@ -70,11 +70,9 @@ module.exports = {
 
                 quoteJson.quotes[outPut.quote] = outPut;
             }
-
         }
 
         console.log("Sorted quotes, pushing to json")
-        //let quoteOutput = {quoteJson};
 
         fs.writeFile( path.join(dataPath, 'Quotes.json'), JSON.stringify(quoteJson, null, '\t'), 'utf8', (err) => {
             if (err) {

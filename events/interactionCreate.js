@@ -1,6 +1,7 @@
 const { Events, MessageFlags, ButtonBuilder, ButtonStyle, ActionRowBuilder, quote} = require('discord.js');
 const path = require("node:path");
 const dataPath = path.join(__dirname, '..', 'Data',);
+const fs = require('node:fs');
 
 module.exports = {
 	name: Events.InteractionCreate,
@@ -12,7 +13,6 @@ module.exports = {
                 console.error(`No command matching ${interaction.commandName} was found.`);
                 return;
             }
-
             try {
                 await command.execute(interaction);
             } catch (error) {
@@ -42,11 +42,17 @@ module.exports = {
             {
                 switch(btnID){
                     case "beginVotingBtn":
-                        await beginVoting(interaction);
+                        await sendQuoteVote(interaction);
                         break;
                     case "cancelVotingStartupBtn":
                         console.log('Cancel voting...');
                         interaction.reply({content: `Aborting process`})
+                        break;
+                    case "nextQuoteBtn":
+                        await sendQuoteVote(interaction);
+                        break;
+                    case "clearDMsBtn":
+                        await clearDM(interaction);
                         break;
                 }
             }
@@ -55,10 +61,8 @@ module.exports = {
 };
 
 //Button functions
-async function beginVoting(interaction)
+async function sendQuoteVote(interaction)
 {
-    let quoteJson = require(path.join(dataPath, 'Quotes.json'));
-    let userJson = require(path.join(dataPath, 'UserStats.json'));
     /* STEPS
     *  1: Get user stats
     *  2: Acquire random quote unvoted quote & display
@@ -67,42 +71,80 @@ async function beginVoting(interaction)
     *       row2: cursed rank
     *       row3: options (skip, mark as not quote, display stats)
     *  4: Update both user stats & quote stats
-    *  5: Ask to vote again (Separate function)
+    *  5: Ask to vote again
     * */
-    //TODO: init users who aren't already in stats
-    //TODO: Check if user has already voted on random quote, maybe generate seed?
     //TODO: Options menu. Skip, mark 'not a quote', exit, display stats, display ranks
+    let quoteJson = require(path.join(dataPath, 'Quotes.json'));
+    let userJson = require(path.join(dataPath, 'UserStats.json'));
 
-    let userStats = userJson.users[interaction.user.globalName];
+    let userStats = {};
 
-    let quoteKeys = Object.keys(quoteJson.quotes);
-    let randomQuote = quoteJson.quotes[quoteKeys[Math.floor(Math.random() * quoteKeys.length)]]; //Grabs a random key & puts it into quotes to display
+    if(typeof userJson.users === 'undefined') //inits users if needed
+    {
+        userJson.users = {};
+    }
 
-    console.log(randomQuote);
+    if(typeof userJson.users[interaction.user.globalName] === 'undefined') //inits userStats if needed, otherwise grab stats from JSON
+    {
+        userStats =  {
+            sentByCount: 0,
+            quotedCount: 0,
+            quoteOrder: [],
+            lastQuote: 0
+        }
+    }
+    else
+    {
+        userStats = userJson.users[interaction.user.globalName];
+    }
+
+    //Checks to see if the user has a quote list, if not initialize it
+    if(userStats.quoteOrder.length <= 0)
+    {
+        let quoteKeys = Object.keys(quoteJson.quotes);
+        await shuffle(quoteKeys);
+        userStats.quoteOrder = quoteKeys;
+    }
+
+    let randomQuote = userStats.quoteOrder[userStats.lastQuote]; //Grabs a random key & puts it into quotes to display
+    userStats.lastQuote++;
+
+    if(userStats.lastQuote >= quoteJson.quotes.length)
+    {
+        //TODO: Do end of list functionality
+        userStats.quoteOrder = 0; //Temp reset so nothing breaks
+    }
+
+    userJson.users[interaction.user.globalName] = userStats; //Updates the core json after all is done
+    //Updates UserStats.json with the update
+    await writeToJsonFile("UserStats.json", userStats);
+
     console.log('Begin voting...');
 
+    const btn_NextQuote = new ButtonBuilder().setCustomId('nextQuoteBtn').setLabel('Next Quote').setStyle(ButtonStyle.Primary);
+    const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote)
+
     //Funny action row
-    const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${randomQuote.quote}`).setLabel('0').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank2 = new ButtonBuilder().setCustomId(`FRank 1:${randomQuote.quote}`).setLabel('1').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank3 = new ButtonBuilder().setCustomId(`FRank 2:${randomQuote.quote}`).setLabel('2').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank4 = new ButtonBuilder().setCustomId(`FRank 3:${randomQuote.quote}`).setLabel('3').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank5 = new ButtonBuilder().setCustomId(`FRank 4:${randomQuote.quote}`).setLabel('4').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${randomQuote}`).setLabel('0').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank2 = new ButtonBuilder().setCustomId(`FRank 1:${randomQuote}`).setLabel('1').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank3 = new ButtonBuilder().setCustomId(`FRank 2:${randomQuote}`).setLabel('2').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank4 = new ButtonBuilder().setCustomId(`FRank 3:${randomQuote}`).setLabel('3').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank5 = new ButtonBuilder().setCustomId(`FRank 4:${randomQuote}`).setLabel('4').setStyle(ButtonStyle.Primary);
     const actRow_FunnyRank = new ActionRowBuilder().addComponents(btn_FunnyRank1, btn_FunnyRank2, btn_FunnyRank3, btn_FunnyRank4, btn_FunnyRank5)
 
     //Cursed action row
-    const btn_CursedRank1 = new ButtonBuilder().setCustomId(`CRank 0:${randomQuote.quote}`).setLabel('0').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank2 = new ButtonBuilder().setCustomId(`CRank 1:${randomQuote.quote}`).setLabel('1').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank3 = new ButtonBuilder().setCustomId(`CRank 2:${randomQuote.quote}`).setLabel('2').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank4 = new ButtonBuilder().setCustomId(`CRank 3:${randomQuote.quote}`).setLabel('3').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank5 = new ButtonBuilder().setCustomId(`CRank 4:${randomQuote.quote}`).setLabel('4').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank1 = new ButtonBuilder().setCustomId(`CRank 0:${randomQuote}`).setLabel('0').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank2 = new ButtonBuilder().setCustomId(`CRank 1:${randomQuote}`).setLabel('1').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank3 = new ButtonBuilder().setCustomId(`CRank 2:${randomQuote}`).setLabel('2').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank4 = new ButtonBuilder().setCustomId(`CRank 3:${randomQuote}`).setLabel('3').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank5 = new ButtonBuilder().setCustomId(`CRank 4:${randomQuote}`).setLabel('4').setStyle(ButtonStyle.Danger);
     const actRow_CursedRank = new ActionRowBuilder().addComponents(btn_CursedRank1, btn_CursedRank2, btn_CursedRank3, btn_CursedRank4, btn_CursedRank5)
 
-
-    interaction.reply({content: `You should receive a message shortly`})
+    interaction.reply({content: `Sending new quote in DM`})
     //Quote and options
     await interaction.user.send({
-        content: `Voting on quote: ${randomQuote.quote}`,
-        //TODO: Add options action row here
+        content: `Voting on quote: ${randomQuote}`,
+        components: [actRow_Options],
     });
     //Funny rank action row
     await interaction.user.send({
@@ -131,13 +173,37 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         Quoted by ${quote.sentBy} \n 
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
 
-        await updateQuotesJsonFile();
+        await writeToJsonFile('Quotes.json', quoteJson);
     }
 
     await interaction.message.delete(); //This will delete the original action row, preventing multi voting
 }
 
-async function updateQuotesJsonFile()
+async function writeToJsonFile(jsonFile, jsonToWrite)
 {
-    //TODO: Write the quote JSON file
+    fs.writeFile(path.join(dataPath, jsonFile), JSON.stringify(jsonToWrite, null, '\t'), 'utf8', (err) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.log('Successfully written Quotes.json');
+    });
+}
+
+//Quick shuffle function using Fisher-Yates algorithm, got from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+async function shuffle(array)
+{
+    let currentIndex = array.length;
+
+    // While there remain elements to shuffle...
+    while (currentIndex !== 0) {
+
+        // Pick a remaining element...
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+    }
 }
