@@ -117,7 +117,7 @@ async function sendQuoteVote(interaction)
 
     userJson.users[interaction.user.globalName] = userStats; //Updates the core json after all is done
     //Updates UserStats.json with the update
-    await writeToJsonFile("UserStats.json", userStats);
+    await writeToJsonFile("UserStats.json", userJson);
 
     console.log('Begin voting...');
 
