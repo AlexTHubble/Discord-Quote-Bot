@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require("node:path");
 
 const dataPath = path.join(__dirname, '..', 'Data',);
-const { quotes } = require(path.join(dataPath, 'Quotes.json'));
+const quoteJson  = require(path.join(dataPath, 'Quotes.json'));
 
 module.exports = {
     data: new SlashCommandBuilder().setName('populatequotejson')
@@ -20,6 +20,10 @@ module.exports = {
         let channel = await interaction.client.channels.fetch(targetChannel.id)
 
         await interaction.reply('Working, this may take a moment')
+
+        if(typeof quoteJson.quotes  === 'undefined')
+            quoteJson.quotes = {};
+
         console.log("Starting scrub")
         let messages = [];
 
@@ -44,7 +48,7 @@ module.exports = {
                     mentionedUser: "",
                     quote: "",
                     sentBy: "",
-                    cringeRank: 0,
+                    cursedRank: 0,
                     funnyRank: 0
                 }
 
@@ -56,23 +60,23 @@ module.exports = {
                 outPut.mentionedUser = message.mentions.users.entries().next().value[1].globalName
                 outPut.sentBy = message.author.globalName;
 
-                let isDefined = typeof quotes[outPut.quote];
+
                 //Checks if we're redefining a quote, if we are take the existing rankings
-                if(isDefined !== "undefined")
+                if(typeof quoteJson.quotes[outPut.quote] !== "undefined")
                 {
-                    outPut.cringeRank = quotes[outPut.quote].cringeRank
-                    outPut.funnyRank = quotes[outPut.quote].funnyRank
+                    outPut.cursedRank = quoteJson.quotes[outPut.quote].cursedRank
+                    outPut.funnyRank = quoteJson.quotes[outPut.quote].funnyRank
                 }
 
-                quotes[outPut.quote] = outPut;
+                quoteJson.quotes[outPut.quote] = outPut;
             }
 
         }
 
         console.log("Sorted quotes, pushing to json")
-        let quoteOutput = {"quotes": quotes};
+        //let quoteOutput = {quoteJson};
 
-        fs.writeFile( path.join(dataPath, 'Quotes.json'), JSON.stringify(quoteOutput, null, '\t'), 'utf8', (err) => {
+        fs.writeFile( path.join(dataPath, 'Quotes.json'), JSON.stringify(quoteJson, null, '\t'), 'utf8', (err) => {
             if (err) {
                 console.error(err);
                 return;
