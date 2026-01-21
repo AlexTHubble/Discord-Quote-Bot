@@ -50,8 +50,8 @@ module.exports = {
                         await sendQuoteVote(interaction);
                         break;
                     case "cancelVotingStartupBtn":
-                        console.log('Cancel voting...');
                         interaction.reply({content: `Aborting process`})
+                        interaction.message.delete();
                         break;
                     case "nextQuoteBtn":
                         await sendQuoteVote(interaction);
@@ -247,6 +247,7 @@ async function showUserStats(interaction)
 //Controls the leaderboard menu
 async function showLeaderboardMenu(interaction, selection)
 {
+    //TODO: Auto hide menu on selection
     let reply = "";
     let actRowButtons = []
 
