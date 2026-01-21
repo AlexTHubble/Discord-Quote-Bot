@@ -90,8 +90,9 @@ async function sendQuoteVote(interaction)
     *  4: Update both user stats & quote stats
     *  5: Ask to vote again
     * */
-    //TODO: BUG: If quote is over 100 characters can't be sent in BTN ID, easy fix would be to make a UUID (probably just the index of the quote in the object) as a key
     //TODO: Quote sort order change
+    //TODO: Create an array of keys already voted on, makes sure no user votes on the same quote twice (could happen when sorting methods are swapped
+    //TODO: Change randomized list to only grab in increments of 50. (50 random, then at 51 grab the next 50)
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let userJson = require(path.join(dataPath, 'UserStats.json'));
 
@@ -183,6 +184,8 @@ async function sendQuoteVote(interaction)
 
 async function castVote(interaction, funnyRank, cursedRank, quoteKey)
 {
+    //TODO: Update leaderboard object
+    //TODO: Update UserStats object
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
 
     if(funnyRank !== cursedRank) //If they're equal then 0 was pressed, delete the message without adjusting scores
@@ -294,4 +297,9 @@ async function showLeaderboardMenu(interaction, selection)
 async function closeMenu(interaction)
 {
     await interaction.message.delete(); //This will delete the original action row, preventing multi voting
+}
+
+async function displayTopFunnyLeaderboard(interaction, numberToShow)
+{
+    //TODO: Make a separate object within Quotes.json to hold the top 100 funny quotes, make this update whenever a quote is voted upon
 }
