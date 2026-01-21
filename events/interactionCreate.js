@@ -38,6 +38,11 @@ module.exports = {
                 await castVote(interaction, 0, cursedRank, quote)
                 console.log(`Quote: ${quote} ranked at cursed ${cursedRank}`);
             }
+            else if(btnID.includes('nextQuoteBtn'))
+            {
+                const quote = btnID.slice(13)
+                await markQuoteError(interaction, quote);
+            }
             else //Non quote specific buttons
             {
                 switch(btnID){
@@ -51,8 +56,20 @@ module.exports = {
                     case "nextQuoteBtn":
                         await sendQuoteVote(interaction);
                         break;
-                    case "clearDMsBtn":
-                        await clearDM(interaction);
+                    case "showUserStatsBtn":
+                        await showUserStats(interaction);
+                        break;
+                    case "showLeaderboardBtn":
+                        await showLeaderboardMenu(interaction, "Main");
+                        break;
+                    case"userLeaderboardsBtn":
+                        await showLeaderboardMenu(interaction, "Users");
+                        break;
+                    case "quoteLeaderboardsBtn":
+                        await showLeaderboardMenu(interaction, "Quotes");
+                        break;
+                    case "closeMenuBtn":
+                        await closeMenu(interaction);
                         break;
                 }
             }
@@ -109,10 +126,11 @@ async function sendQuoteVote(interaction)
     let randomQuote = userStats.quoteOrder[userStats.lastQuote]; //Grabs a random key & puts it into quotes to display
     userStats.lastQuote++;
 
-    if(userStats.lastQuote >= quoteJson.quotes.length)
+    const quotesLength = Object.keys(quoteJson.quotes).length
+    if(userStats.lastQuote >= quotesLength)
     {
         //TODO: Do end of list functionality
-        userStats.quoteOrder = 0; //Temp reset so nothing breaks
+        userStats.lastQuote = 0; //Temp reset so nothing breaks
     }
 
     userJson.users[interaction.user.globalName] = userStats; //Updates the core json after all is done
@@ -121,8 +139,12 @@ async function sendQuoteVote(interaction)
 
     console.log('Begin voting...');
 
-    const btn_NextQuote = new ButtonBuilder().setCustomId('nextQuoteBtn').setLabel('Next Quote').setStyle(ButtonStyle.Primary);
-    const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote)
+    //Options action row
+    const btn_NextQuote = new ButtonBuilder().setCustomId(`beginVotingBtn`).setLabel('Next Quote').setStyle(ButtonStyle.Primary);
+    const btn_MarkError = new ButtonBuilder().setCustomId('markErrorBtn').setLabel('Mark Error').setStyle(ButtonStyle.Danger);
+    const btn_ShowUserStats = new ButtonBuilder().setCustomId('showUserStatsBtn').setLabel('Show User Stats').setStyle(ButtonStyle.Secondary);
+    const btn_ShowLeaderBoard = new ButtonBuilder().setCustomId('showLeaderboardBtn').setLabel('Leaderboards').setStyle(ButtonStyle.Secondary);
+    const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote, btn_MarkError, btn_ShowUserStats, btn_ShowLeaderBoard);
 
     //Funny action row
     const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${randomQuote}`).setLabel('0').setStyle(ButtonStyle.Primary);
@@ -143,7 +165,7 @@ async function sendQuoteVote(interaction)
     interaction.reply({content: `Sending new quote in DM`})
     //Quote and options
     await interaction.user.send({
-        content: `Voting on quote: ${randomQuote}`,
+        content: `Voting on quote: "${randomQuote}"`,
         components: [actRow_Options],
     });
     //Funny rank action row
@@ -168,7 +190,7 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         quote.funnyRank += funnyRank;
         quote.cursedRank += cursedRank;
 
-        interaction.reply(`Thank you for voting on ${quote.quote} \n 
+        interaction.reply(`Thank you for voting on "${quote.quote}" \n 
         Said by ${quote.mentionedUser} \n 
         Quoted by ${quote.sentBy} \n 
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
@@ -206,4 +228,68 @@ async function shuffle(array)
         [array[currentIndex], array[randomIndex]] = [
             array[randomIndex], array[currentIndex]];
     }
+}
+
+async function markQuoteError(interaction, quote)
+{
+    //TODO: Stub, add functionality
+
+    //TODO: BUTTONS TO ADD: Confirm / cancel
+}
+
+async function showUserStats(interaction)
+{
+    //TODO: add functionality
+
+    //TODO: BUTTONS TO ADD: Hide stats
+}
+
+//Controls the leaderboard menu
+async function showLeaderboardMenu(interaction, selection)
+{
+    let reply = "";
+    let actRowButtons = []
+
+    switch (selection){
+        case "Main":
+            reply = "Select what leaderboard to display";
+            const btn_UserLeaderboards = new ButtonBuilder().setCustomId(`userLeaderboardsBtn`).setLabel('User Leaderboards').setStyle(ButtonStyle.Primary);
+            const btn_QuoteLeaderboards = new ButtonBuilder().setCustomId(`quoteLeaderboardsBtn`).setLabel('Quote Leaderboards').setStyle(ButtonStyle.Primary);
+            actRowButtons.push(btn_UserLeaderboards, btn_QuoteLeaderboards);
+            break;
+        case "Users":
+            reply = "What User stat do you want the leaderboard for?"
+            const btn_TimesQuoted = new ButtonBuilder().setCustomId(`showTimesQuotedLeaderboardBtn`).setLabel('Times quoted Leaderboard').setStyle(ButtonStyle.Primary);
+            const btn_Recorder = new ButtonBuilder().setCustomId(`showRecorderLeaderboardBtn`).setLabel('Recorder Leaderboards').setStyle(ButtonStyle.Primary);
+            const btn_UserTotalFunny = new ButtonBuilder().setCustomId(`showUserFunnyLeaderboardBtn`).setLabel('Funniest User Leaderboard').setStyle(ButtonStyle.Primary);
+            const btn_UserTotalCursed = new ButtonBuilder().setCustomId(`showUserCursedLeaderboardBtn`).setLabel('Most Cursed User Leaderboard').setStyle(ButtonStyle.Primary);
+            actRowButtons.push(btn_TimesQuoted, btn_Recorder, btn_UserTotalFunny, btn_UserTotalCursed);
+            break;
+        case "Quotes":
+            reply = "What Quote leaderboard do you want to see?"
+            const btn_FunnyLeaderboard = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn`).setLabel('Funniest Quotes').setStyle(ButtonStyle.Primary);
+            const btn_CursedLeaderboard = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn`).setLabel('Funniest Quotes').setStyle(ButtonStyle.Primary);
+            actRowButtons.push(btn_FunnyLeaderboard, btn_CursedLeaderboard);
+            break;
+        default:
+            reply = "An error has occurred"
+    }
+
+    //All menus will have the close button
+    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide Menu').setStyle(ButtonStyle.Danger);
+    actRowButtons.push(btn_HideMessage);
+
+    const actRow_LeaderBoardMenu = new ActionRowBuilder().addComponents(actRowButtons)
+
+    //Quote and options
+    await interaction.reply({
+        content: `${reply}`,
+        components: [actRow_LeaderBoardMenu],
+    });
+
+}
+
+async function closeMenu(interaction)
+{
+    await interaction.message.delete(); //This will delete the original action row, preventing multi voting
 }
