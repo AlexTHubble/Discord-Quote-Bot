@@ -90,7 +90,8 @@ async function sendQuoteVote(interaction)
     *  4: Update both user stats & quote stats
     *  5: Ask to vote again
     * */
-    //TODO: Options menu. Skip, mark 'not a quote', exit, display stats, display ranks
+    //TODO: BUG: If quote is over 100 characters can't be sent in BTN ID, easy fix would be to make a UUID (probably just the index of the quote in the object) as a key
+    //TODO: Quote sort order change
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let userJson = require(path.join(dataPath, 'UserStats.json'));
 
@@ -123,7 +124,7 @@ async function sendQuoteVote(interaction)
         userStats.quoteOrder = quoteKeys;
     }
 
-    let randomQuote = userStats.quoteOrder[userStats.lastQuote]; //Grabs a random key & puts it into quotes to display
+    let currentQuote = userStats.quoteOrder[userStats.lastQuote]; //Grabs the next key from the shuffled list
     userStats.lastQuote++;
 
     const quotesLength = Object.keys(quoteJson.quotes).length
@@ -147,25 +148,25 @@ async function sendQuoteVote(interaction)
     const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote, btn_MarkError, btn_ShowUserStats, btn_ShowLeaderBoard);
 
     //Funny action row
-    const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${randomQuote}`).setLabel('0').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank2 = new ButtonBuilder().setCustomId(`FRank 1:${randomQuote}`).setLabel('1').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank3 = new ButtonBuilder().setCustomId(`FRank 2:${randomQuote}`).setLabel('2').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank4 = new ButtonBuilder().setCustomId(`FRank 3:${randomQuote}`).setLabel('3').setStyle(ButtonStyle.Primary);
-    const btn_FunnyRank5 = new ButtonBuilder().setCustomId(`FRank 4:${randomQuote}`).setLabel('4').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${currentQuote}`).setLabel('0').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank2 = new ButtonBuilder().setCustomId(`FRank 1:${currentQuote}`).setLabel('1').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank3 = new ButtonBuilder().setCustomId(`FRank 2:${currentQuote}`).setLabel('2').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank4 = new ButtonBuilder().setCustomId(`FRank 3:${currentQuote}`).setLabel('3').setStyle(ButtonStyle.Primary);
+    const btn_FunnyRank5 = new ButtonBuilder().setCustomId(`FRank 4:${currentQuote}`).setLabel('4').setStyle(ButtonStyle.Primary);
     const actRow_FunnyRank = new ActionRowBuilder().addComponents(btn_FunnyRank1, btn_FunnyRank2, btn_FunnyRank3, btn_FunnyRank4, btn_FunnyRank5)
 
     //Cursed action row
-    const btn_CursedRank1 = new ButtonBuilder().setCustomId(`CRank 0:${randomQuote}`).setLabel('0').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank2 = new ButtonBuilder().setCustomId(`CRank 1:${randomQuote}`).setLabel('1').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank3 = new ButtonBuilder().setCustomId(`CRank 2:${randomQuote}`).setLabel('2').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank4 = new ButtonBuilder().setCustomId(`CRank 3:${randomQuote}`).setLabel('3').setStyle(ButtonStyle.Danger);
-    const btn_CursedRank5 = new ButtonBuilder().setCustomId(`CRank 4:${randomQuote}`).setLabel('4').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank1 = new ButtonBuilder().setCustomId(`CRank 0:${currentQuote}`).setLabel('0').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank2 = new ButtonBuilder().setCustomId(`CRank 1:${currentQuote}`).setLabel('1').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank3 = new ButtonBuilder().setCustomId(`CRank 2:${currentQuote}`).setLabel('2').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank4 = new ButtonBuilder().setCustomId(`CRank 3:${currentQuote}`).setLabel('3').setStyle(ButtonStyle.Danger);
+    const btn_CursedRank5 = new ButtonBuilder().setCustomId(`CRank 4:${currentQuote}`).setLabel('4').setStyle(ButtonStyle.Danger);
     const actRow_CursedRank = new ActionRowBuilder().addComponents(btn_CursedRank1, btn_CursedRank2, btn_CursedRank3, btn_CursedRank4, btn_CursedRank5)
 
     interaction.reply({content: `Sending new quote in DM`})
     //Quote and options
     await interaction.user.send({
-        content: `Voting on quote: "${randomQuote}"`,
+        content: `Voting on quote: "${quoteJson.quotes[currentQuote].quote}"`,
         components: [actRow_Options],
     });
     //Funny rank action row

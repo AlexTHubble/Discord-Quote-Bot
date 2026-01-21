@@ -68,7 +68,8 @@ module.exports = {
                     outPut.funnyRank = quoteJson.quotes[outPut.quote].funnyRank
                 }
 
-                quoteJson.quotes[outPut.quote] = outPut;
+                let key = outPut.quote.slice(0, 60)
+                quoteJson.quotes[key] = outPut;
             }
         }
 
