@@ -90,8 +90,6 @@ async function sendQuoteVote(interaction)
     *  4: Update both user stats & quote stats
     *  5: Ask to vote again
     * */
-    //TODO: Quote sort order change
-    //TODO: Create an array of keys already voted on, makes sure no user votes on the same quote twice (could happen when sorting methods are swapped)
     //TODO: BUGS: Major bug, on crash wipes out JSON files
 
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
@@ -185,7 +183,6 @@ async function sendQuoteVote(interaction)
 
 async function castVote(interaction, funnyRank, cursedRank, quoteKey)
 {
-    //TODO: Update leaderboard object
     //TODO: Update UserStats object
     //TODO: BUGS: Major bug, on crash wipes out JSON files
 
@@ -224,6 +221,8 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         await writeToJsonFile('Quotes.json', quoteJson);
     }
 
+    //Loads the channel into the cache, prevents crash on user interacting with buttons after re launch of the bot
+    await interaction.client.channels.fetch(interaction.message.channelId)
     await interaction.message.delete(); //This will delete the original action row, preventing multi voting
 }
 
