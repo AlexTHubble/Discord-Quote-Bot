@@ -91,8 +91,9 @@ async function sendQuoteVote(interaction)
     *  5: Ask to vote again
     * */
     //TODO: Quote sort order change
-    //TODO: Create an array of keys already voted on, makes sure no user votes on the same quote twice (could happen when sorting methods are swapped
-    //TODO: Change randomized list to only grab in increments of 50. (50 random, then at 51 grab the next 50)
+    //TODO: Create an array of keys already voted on, makes sure no user votes on the same quote twice (could happen when sorting methods are swapped)
+    //TODO: BUGS: Major bug, on crash wipes out JSON files
+
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let userJson = require(path.join(dataPath, 'UserStats.json'));
 
@@ -186,8 +187,11 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
 {
     //TODO: Update leaderboard object
     //TODO: Update UserStats object
+    //TODO: BUGS: Major bug, on crash wipes out JSON files
+
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
 
+    //Potential optimization, don't write to json every vote (time based backup?)
     if(funnyRank !== cursedRank) //If they're equal then 0 was pressed, delete the message without adjusting scores
     {
         const quote = quoteJson.quotes[quoteKey];
@@ -198,6 +202,24 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         Said by ${quote.mentionedUser} \n 
         Quoted by ${quote.sentBy} \n 
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
+
+       /* quoteJson.funnyLeader[quoteKey] = quote
+        quoteJson.cursedLeader[quoteKey] = quote;*/
+
+        //Checks if the quote is already on the list, if not push it
+        if(!quoteJson.cursedLeader.includes(quote))
+            quoteJson.cursedLeader.push(quote)
+        if(!quoteJson.funnyLeader.includes(quote))
+            quoteJson.funnyLeader.push(quote)
+
+        //Sorts the leader boards by respective rank
+        quoteJson.funnyLeader.sort((a, b) => b.funnyRank - a.funnyRank);
+        quoteJson.cursedLeader.sort((a, b) => b.cursedRank - a.cursedRank);
+
+        if(quoteJson.funnyLeader.length > 100) //Checks to see if the object is at it's max length, if it is remove the bottom quote
+            quoteJson.funnyLeader.pop();
+        if(quoteJson.cursedLeader.length > 100)
+            quoteJson.cursedLeader.pop();
 
         await writeToJsonFile('Quotes.json', quoteJson);
     }

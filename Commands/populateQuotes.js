@@ -21,8 +21,17 @@ module.exports = {
 
         await interaction.reply('Working, this may take a moment')
 
+        //Checks to make sure all the objects are accounted for
         if(typeof quoteJson.quotes  === 'undefined')
             quoteJson.quotes = {};
+        if(typeof quoteJson.cursedLeader === 'undefined')
+        {
+            quoteJson.cursedLeader = [];
+        }
+        if(typeof quoteJson.funnyLeader === 'undefined')
+        {
+            quoteJson.funnyLeader = [];
+        }
 
         console.log("Starting scrub")
         let messages = [];
@@ -49,7 +58,8 @@ module.exports = {
                     quote: "",
                     sentBy: "",
                     cursedRank: 0,
-                    funnyRank: 0
+                    funnyRank: 0,
+                    key: ""
                 }
 
                 let quote = message.content;
@@ -68,8 +78,9 @@ module.exports = {
                     outPut.funnyRank = quoteJson.quotes[outPut.quote].funnyRank
                 }
 
-                let key = outPut.quote.slice(0, 60)
-                quoteJson.quotes[key] = outPut;
+                //Sets up the key to be the first 60 characters of the quote
+                outPut.key = outPut.quote.slice(0, 60);
+                quoteJson.quotes[outPut.key] = outPut;
             }
         }
 
