@@ -226,7 +226,8 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         quoteJson.funnyLeader.sort((a, b) => b.funnyRank - a.funnyRank);
         quoteJson.cursedLeader.sort((a, b) => b.cursedRank - a.cursedRank);
 
-        if(quoteJson.funnyLeader.length > 100) //Checks to see if the object is at it's max length, if it is remove the bottom quote
+        //Checks to see if the object is at it's max length, if it is remove the bottom quote
+        if(quoteJson.funnyLeader.length > 100)
             quoteJson.funnyLeader.pop();
         if(quoteJson.cursedLeader.length > 100)
             quoteJson.cursedLeader.pop();
@@ -341,7 +342,9 @@ async function showLeaderboardMenu(interaction, selection)
         content: reply,
         components: [actRow_LeaderBoardMenu],
     });
-
+    //Closes the previous menu as long as it doesn't close the vote menu
+    if(selection !== "Main")
+        await closeMenu(interaction);
 }
 
 async function closeMenu(interaction)
@@ -383,4 +386,5 @@ async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberT
         content: reply,
         components: [actRow_LeaderBoard]
     });
+    await closeMenu(interaction); //Closes the previous menu
 }
