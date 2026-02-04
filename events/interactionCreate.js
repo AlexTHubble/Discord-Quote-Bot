@@ -23,13 +23,23 @@ module.exports = {
             // respond to the button
             let btnID = interaction.customId;
 
-            //Checks to see if either of the buttons are a rank button, this is needed because of the dynamic ID used to transfer data between events
+            //Checks to see if the button uses a dynamic Unique ID to transfer specific data, if not move to the switchboard
             if(btnID.includes('FRank'))
             {
                 const funnyRank = parseInt(btnID[6])
                 const quote = btnID.slice(8)
                 await castVote(interaction, funnyRank, 0, quote)
                 console.log(`Quote: ${quote} ranked at funny ${funnyRank}`);
+            }
+            else if(btnID.includes('showCursedLeaderboardBtn'))
+            {
+                const amountToShow = parseInt(btnID.slice(25));
+                await displayTopQuoteLeaderboard(interaction, 'cursed', amountToShow);
+            }
+            else if(btnID.includes('showFunnyLeaderboardBtn'))
+            {
+                const amountToShow = parseInt(btnID.slice(24));
+                await displayTopQuoteLeaderboard(interaction, 'funny', amountToShow);
             }
             else if(btnID.includes('CRank'))
             {
@@ -68,6 +78,12 @@ module.exports = {
                     case "quoteLeaderboardsBtn":
                         await showLeaderboardMenu(interaction, "Quotes");
                         break;
+                    case"showFunnyLeaderboardMenuBtn":
+                        await showLeaderboardMenu(interaction, "FunnyNumber");
+                        break;
+                    case"showCursedLeaderboardMenuBtn":
+                        await showLeaderboardMenu(interaction, "CursedNumber");
+                        break;
                     case "closeMenuBtn":
                         await closeMenu(interaction);
                         break;
@@ -90,7 +106,6 @@ async function sendQuoteVote(interaction)
     *  4: Update both user stats & quote stats
     *  5: Ask to vote again
     * */
-    //TODO: BUGS: Major bug, on crash wipes out JSON files
 
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let userJson = require(path.join(dataPath, 'UserStats.json'));
@@ -200,9 +215,6 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         Quoted by ${quote.sentBy} \n 
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
 
-       /* quoteJson.funnyLeader[quoteKey] = quote
-        quoteJson.cursedLeader[quoteKey] = quote;*/
-
         //Checks if the quote is already on the list, if not push it
         if(!quoteJson.cursedLeader.includes(quote))
             quoteJson.cursedLeader.push(quote)
@@ -293,9 +305,25 @@ async function showLeaderboardMenu(interaction, selection)
             break;
         case "Quotes":
             reply = "What Quote leaderboard do you want to see?"
-            const btn_FunnyLeaderboard = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn`).setLabel('Funniest Quotes').setStyle(ButtonStyle.Primary);
-            const btn_CursedLeaderboard = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn`).setLabel('Funniest Quotes').setStyle(ButtonStyle.Primary);
+            const btn_FunnyLeaderboard = new ButtonBuilder().setCustomId(`showFunnyLeaderboardMenuBtn`).setLabel('Funniest Quotes').setStyle(ButtonStyle.Primary);
+            const btn_CursedLeaderboard = new ButtonBuilder().setCustomId(`showCursedLeaderboardMenuBtn`).setLabel('Cursed Quotes').setStyle(ButtonStyle.Primary);
             actRowButtons.push(btn_FunnyLeaderboard, btn_CursedLeaderboard);
+            break;
+        case "CursedNumber":
+            reply = "How many of the top 100 would you like to see?"
+            const btn_Cursed5 = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn 5`).setLabel('5').setStyle(ButtonStyle.Primary);
+            const btn_Cursed10 = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn 10`).setLabel('10').setStyle(ButtonStyle.Primary);
+            const btn_Cursed50 = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn 50`).setLabel('50').setStyle(ButtonStyle.Primary);
+            const btn_Cursed100 = new ButtonBuilder().setCustomId(`showCursedLeaderboardBtn 100`).setLabel('100').setStyle(ButtonStyle.Primary);
+            actRowButtons.push(btn_Cursed5, btn_Cursed10, btn_Cursed50, btn_Cursed100);
+            break;
+        case "FunnyNumber":
+            reply = "How many of the top 100 would you like to see?"
+            const btn_Funny5 = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn 5`).setLabel('5').setStyle(ButtonStyle.Primary);
+            const btn_Funny10 = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn 10`).setLabel('10').setStyle(ButtonStyle.Primary);
+            const btn_Funny50 = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn 50`).setLabel('50').setStyle(ButtonStyle.Primary);
+            const btn_Funny100 = new ButtonBuilder().setCustomId(`showFunnyLeaderboardBtn 100`).setLabel('100').setStyle(ButtonStyle.Primary);
+            actRowButtons.push(btn_Funny5, btn_Funny10, btn_Funny50, btn_Funny100);
             break;
         default:
             reply = "An error has occurred"
@@ -309,7 +337,7 @@ async function showLeaderboardMenu(interaction, selection)
 
     //Quote and options
     await interaction.reply({
-        content: `${reply}`,
+        content: reply,
         components: [actRow_LeaderBoardMenu],
     });
 
@@ -317,10 +345,41 @@ async function showLeaderboardMenu(interaction, selection)
 
 async function closeMenu(interaction)
 {
+    await interaction.client.channels.fetch(interaction.message.channelId); //Loads the channel into the cache, prevents crash on user interacting with buttons after re launch of the bot
     await interaction.message.delete(); //This will delete the original action row, preventing multi voting
 }
 
-async function displayTopFunnyLeaderboard(interaction, numberToShow)
+async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberToShow)
 {
-    //TODO: Make a separate object within Quotes.json to hold the top 100 funny quotes, make this update whenever a quote is voted upon
+
+    //TODO: Cap single message at 2000 characters, setup to send multiple if over that
+    let quoteJson = require(path.join(dataPath, 'Quotes.json'));
+    let reply = ``;
+    let leaderboard = [];
+
+    if(leaderboardToUse === 'funny')
+        leaderboard = quoteJson.funnyLeader;
+    else if(leaderboardToUse === 'cursed')
+        leaderboard = quoteJson.cursedLeader;
+
+    if(numberToShow > leaderboard.length)
+        numberToShow = leaderboard.length;
+
+    for(let i = 0; i < numberToShow; i++)
+    {
+        let quoteStatDisplay = ` \n\n**${i + 1})** ${leaderboard[i].quote}
+        \n *said by:* ${leaderboard[i].mentionedUser} 
+        \n *quoted by:* ${leaderboard[i].sentBy} 
+        \n *funny rank:* ${leaderboard[i].funnyRank} 
+        \n *cursed rank* ${leaderboard[i].cursedRank}`;
+
+        reply += `${quoteStatDisplay}`;
+    }
+
+    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide Menu').setStyle(ButtonStyle.Danger);
+    const actRow_LeaderBoard = new ActionRowBuilder().addComponents(btn_HideMessage)
+    await interaction.reply({
+        content: reply,
+        components: [actRow_LeaderBoard]
+    });
 }
