@@ -178,7 +178,7 @@ async function sendQuoteVote(interaction)
     const btn_CursedRank5 = new ButtonBuilder().setCustomId(`CRank 4:${currentQuote}`).setLabel('4').setStyle(ButtonStyle.Danger);
     const actRow_CursedRank = new ActionRowBuilder().addComponents(btn_CursedRank1, btn_CursedRank2, btn_CursedRank3, btn_CursedRank4, btn_CursedRank5)
 
-    interaction.reply({content: `Sending new quote in DM`})
+    interaction.deferReply({content: `Sending new quote in DM`})
     //Quote and options
     await interaction.user.send({
         content: `**Voting on quote:** "${quoteJson.quotes[currentQuote].quote}"`,
@@ -194,6 +194,7 @@ async function sendQuoteVote(interaction)
         content: `**Cursed Rank**`,
         components: [actRow_CursedRank]
     });
+    interaction.deleteReply()
 }
 
 async function castVote(interaction, funnyRank, cursedRank, quoteKey)
