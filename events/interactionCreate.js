@@ -181,17 +181,17 @@ async function sendQuoteVote(interaction)
     interaction.reply({content: `Sending new quote in DM`})
     //Quote and options
     await interaction.user.send({
-        content: `Voting on quote: "${quoteJson.quotes[currentQuote].quote}"`,
+        content: `**Voting on quote:** "${quoteJson.quotes[currentQuote].quote}"`,
         components: [actRow_Options],
     });
     //Funny rank action row
     await interaction.user.send({
-        content: `Funny Rank`,
+        content: `**Funny Rank**`,
         components: [actRow_FunnyRank]
     });
     //Cursed rank action row
     await interaction.user.send({
-        content: `Cursed Rank`,
+        content: `**Cursed Rank**`,
         components: [actRow_CursedRank]
     });
 }
@@ -210,9 +210,9 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         quote.funnyRank += funnyRank;
         quote.cursedRank += cursedRank;
 
-        interaction.reply(`Thank you for voting on "${quote.quote}" \n 
-        Said by ${quote.mentionedUser} \n 
-        Quoted by ${quote.sentBy} \n 
+        interaction.reply(`Thank you for voting on "${quote.quote}"
+        **Said by:** ${quote.mentionedUser} 
+        **Quoted by:** ${quote.sentBy} 
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
 
         //Checks if the quote is already on the list, if not push it
@@ -367,11 +367,11 @@ async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberT
 
     for(let i = 0; i < numberToShow; i++)
     {
-        let quoteStatDisplay = ` \n\n**${i + 1})** ${leaderboard[i].quote}
-        \n *said by:* ${leaderboard[i].mentionedUser} 
-        \n *quoted by:* ${leaderboard[i].sentBy} 
-        \n *funny rank:* ${leaderboard[i].funnyRank} 
-        \n *cursed rank* ${leaderboard[i].cursedRank}`;
+        let quoteStatDisplay = `\n\n**${i + 1})** "${leaderboard[i].quote}"
+         *said by:* ${leaderboard[i].mentionedUser} 
+         *quoted by:* ${leaderboard[i].sentBy} 
+         *funny rank:* ${leaderboard[i].funnyRank} 
+         *cursed rank* ${leaderboard[i].cursedRank}`;
 
         reply += `${quoteStatDisplay}`;
     }
