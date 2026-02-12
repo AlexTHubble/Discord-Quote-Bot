@@ -110,26 +110,7 @@ async function sendQuoteVote(interaction)
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let userJson = require(path.join(dataPath, 'UserStats.json'));
 
-    let userStats = {};
-
-    if(typeof userJson.users === 'undefined') //inits users if needed
-    {
-        userJson.users = {};
-    }
-
-    if(typeof userJson.users[interaction.user.globalName] === 'undefined') //inits userStats if needed, otherwise grab stats from JSON
-    {
-        userStats =  {
-            sentByCount: 0,
-            quotedCount: 0,
-            quoteOrder: [],
-            lastQuote: 0
-        }
-    }
-    else
-    {
-        userStats = userJson.users[interaction.user.globalName];
-    }
+    let userStats = await initUserStats(interaction.user.globalName)
 
     //Checks to see if the user has a quote list, if not initialize it
     if(userStats.quoteOrder.length <= 0)
@@ -200,8 +181,6 @@ async function sendQuoteVote(interaction)
 async function castVote(interaction, funnyRank, cursedRank, quoteKey)
 {
     //TODO: Update UserStats object
-    //TODO: BUGS: Major bug, on crash wipes out JSON files
-
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
 
     //Potential optimization, don't write to json every vote (time based backup?)
@@ -233,7 +212,19 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
             quoteJson.cursedLeader.pop();
 
         await writeToJsonFile('Quotes.json', quoteJson);
+
+        //Updates the user stats with the new ranks (based on quote.mentionedUser)
+        let userJson = require(path.join(dataPath, 'UserStats.json'));
+        let userStats = await initUserStats(quote.mentionedUser)
+
+        userStats.funnyRank += funnyRank;
+        userStats.cursedRank += cursedRank;
+
+        userJson.users[quote.mentionedUser] = userStats;
+        //Updates UserStats.json with the update
+        await writeToJsonFile("UserStats.json", userJson);
     }
+
 
     //Loads the channel into the cache, prevents crash on user interacting with buttons after re launch of the bot
     await interaction.client.channels.fetch(interaction.message.channelId)
@@ -276,7 +267,7 @@ async function markQuoteError(interaction, quote)
     //TODO: BUTTONS TO ADD: Confirm / cancel
 }
 
-async function showUserStats(interaction)
+async function showUserStats(interaction, statToShow)
 {
     //TODO: add functionality
 
@@ -286,7 +277,6 @@ async function showUserStats(interaction)
 //Controls the leaderboard menu
 async function showLeaderboardMenu(interaction, selection)
 {
-    //TODO: Auto hide menu on selection
     let reply = "";
     let actRowButtons = []
 
@@ -342,6 +332,7 @@ async function showLeaderboardMenu(interaction, selection)
         content: reply,
         components: [actRow_LeaderBoardMenu],
     });
+
     //Closes the previous menu as long as it doesn't close the vote menu
     if(selection !== "Main")
         await closeMenu(interaction);
@@ -358,8 +349,10 @@ async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberT
 
     //TODO: Cap single message at 2000 characters, setup to send multiple if over that
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
-    let reply = ``;
+    let messages = [``];
     let leaderboard = [];
+
+    interaction.deferReply({content: `Gathering leaderboard...`});
 
     if(leaderboardToUse === 'funny')
         leaderboard = quoteJson.funnyLeader;
@@ -377,14 +370,60 @@ async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberT
          *funny rank:* ${leaderboard[i].funnyRank} 
          *cursed rank* ${leaderboard[i].cursedRank}`;
 
-        reply += `${quoteStatDisplay}`;
+        //Checks the length of the last message sent, if it's over the maximum add to a new entry instead
+        if(messages[messages.length - 1].length + quoteStatDisplay.length >= 2000)
+        {
+            messages.push(quoteStatDisplay);
+        }
+        else
+        {
+            messages[messages.length - 1] += quoteStatDisplay;
+        }
     }
 
-    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide Menu').setStyle(ButtonStyle.Danger);
+    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide').setStyle(ButtonStyle.Danger);
     const actRow_LeaderBoard = new ActionRowBuilder().addComponents(btn_HideMessage)
-    await interaction.reply({
-        content: reply,
-        components: [actRow_LeaderBoard]
-    });
+    await interaction.client.channels.fetch(interaction.message.channelId)
+
+    //Send all the messages
+    for(let i = 0; i < messages.length; i++)
+    {
+        await interaction.user.send({
+            content: `${messages[i]}`,
+            components: [actRow_LeaderBoard]
+        })
+    }
     await closeMenu(interaction); //Closes the previous menu
+    interaction.deleteReply(); //Removes the thinking message
+}
+
+//Ensures user has been initialized before use, returns the js object
+async function initUserStats(user)
+{
+    let userJson = require(path.join(dataPath, 'UserStats.json'));
+
+    let userStats = {};
+
+    if(typeof userJson.users === 'undefined') //inits users if needed
+    {
+        userJson.users = {};
+    }
+
+    if(typeof userJson.users[user] === 'undefined') //inits userStats if needed, otherwise grab stats from JSON
+    {
+        userStats =  {
+            sentByCount: 0,
+            quotedCount: 0,
+            funnyRank: 0,
+            cursedRank: 0,
+            quoteOrder: [],
+            lastQuote: 0
+        }
+    }
+    else
+    {
+        userStats = userJson.users[user];
+    }
+
+    return userStats;
 }

@@ -40,6 +40,8 @@ module.exports = {
                     {
                         sentByCount: 1,
                         quotedCount: 0,
+                        funnyRank: 0,
+                        cursedRank: 0,
                         quoteOrder: [],
                         lastQuote: 0
                     }
@@ -48,8 +50,10 @@ module.exports = {
             {
                 statsJson.users[quoteJson.quotes[key].mentionedUser] =
                     {
-                        sentByCount: 0,
-                        quotedCount: 1,
+                        sentByCount: 1,
+                        quotedCount: 0,
+                        funnyRank: 0,
+                        cursedRank: 0,
                         quoteOrder: [],
                         lastQuote: 0
                     }
