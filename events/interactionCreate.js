@@ -67,7 +67,7 @@ module.exports = {
                         await sendQuoteVote(interaction);
                         break;
                     case "showUserStatsBtn":
-                        //TODO: Show individual user stats
+                        await showUserStats(interaction);
                         break;
                     case "showLeaderboardBtn":
                         await showLeaderboardMenu(interaction, "Main");
@@ -285,7 +285,6 @@ async function showUserLeaderboards(interaction, statToShow)
     * 3: Sort user stats
     * 4: Display
     */
-
     interaction.deferReply({content: `Gathering leaderboard...`});
 
     //Acquire the data and sort it accordingly
@@ -493,4 +492,28 @@ async function initUserStats(user)
     }
 
     return userStats;
+}
+
+async function showUserStats(interaction)
+{
+    let userStatJson = require(path.join(dataPath, 'UserStats.json'));
+    let stats = userStatJson.users[interaction.user.globalName];
+
+    let message = `\nStats for user ${stats.userName}
+    Times ${stats.userName} has been quoted: ${stats.quotedCount}
+    Times ${stats.userName} has quoted others: ${stats.sentByCount}
+    ${stats.userName} funny rank: ${stats.funnyRank}
+    ${stats.userName} cursed rank: ${stats.cursedRank}
+    ${stats.userName} has voted on ${stats.lastQuote + 1} quotes!`;
+
+    //Sets up the reply
+    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide').setStyle(ButtonStyle.Danger);
+    const actRow_Stats = new ActionRowBuilder().addComponents(btn_HideMessage)
+    await interaction.client.channels.fetch(interaction.message.channelId)
+
+    await interaction.reply({
+        content: `${message}`,
+        components: [actRow_Stats]
+    })
+
 }
