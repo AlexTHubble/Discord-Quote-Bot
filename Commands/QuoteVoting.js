@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require("discord.js");
 //NOTE: most of the voting logic exists within interactionCreate.js within the Events folder.
 //That's where the bulk of the button logic lives and ergo most of our functionality for voting!
 
@@ -13,7 +13,8 @@ module.exports = {
         await interaction.reply({
             content: 'Would you like to begin voting? This will send you a private DM',
             components: [actRow_BeginVoting],
-            withResponse: true
+            withResponse: true,
+            flags: MessageFlags.Ephemeral
         });
     },
 };

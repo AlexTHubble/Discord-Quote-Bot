@@ -48,11 +48,11 @@ module.exports = {
                 await castVote(interaction, 0, cursedRank, quote)
                 console.log(`Quote: ${quote} ranked at cursed ${cursedRank}`);
             }
-            else if(btnID.includes('nextQuoteBtn'))
+          /*  else if(btnID.includes('nextQuoteBtn'))
             {
                 const quote = btnID.slice(13)
                 await markQuoteError(interaction, quote);
-            }
+            }*/
             else //Non quote specific buttons
             {
                 switch(btnID){
@@ -60,8 +60,7 @@ module.exports = {
                         await sendQuoteVote(interaction);
                         break;
                     case "cancelVotingStartupBtn":
-                        interaction.reply({content: `Aborting process`})
-                        interaction.message.delete();
+                        interaction.reply({content: `Aborting process`, flags: MessageFlags.Ephemeral })
                         break;
                     case "nextQuoteBtn":
                         await sendQuoteVote(interaction);
@@ -150,7 +149,8 @@ async function sendQuoteVote(interaction)
 
     //Options action row
     const btn_NextQuote = new ButtonBuilder().setCustomId(`beginVotingBtn`).setLabel('Next Quote').setStyle(ButtonStyle.Primary);
-    const btn_MarkError = new ButtonBuilder().setCustomId('markErrorBtn').setLabel('Mark Error').setStyle(ButtonStyle.Danger);
+    //TODO: Uncomment when done testing & error functionality is implemented
+    //const btn_MarkError = new ButtonBuilder().setCustomId('markErrorBtn').setLabel('Mark Error').setStyle(ButtonStyle.Danger);
     const btn_ShowUserStats = new ButtonBuilder().setCustomId('showUserStatsBtn').setLabel('Show User Stats').setStyle(ButtonStyle.Secondary);
     const btn_ShowLeaderBoard = new ButtonBuilder().setCustomId('showLeaderboardBtn').setLabel('Leaderboards').setStyle(ButtonStyle.Secondary);
     const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote, btn_MarkError, btn_ShowUserStats, btn_ShowLeaderBoard);
