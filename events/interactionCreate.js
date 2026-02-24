@@ -67,7 +67,7 @@ module.exports = {
                         await sendQuoteVote(interaction);
                         break;
                     case "showUserStatsBtn":
-                        await showUserStats(interaction);
+                        //TODO: Show individual user stats
                         break;
                     case "showLeaderboardBtn":
                         await showLeaderboardMenu(interaction, "Main");
@@ -86,6 +86,18 @@ module.exports = {
                         break;
                     case "closeMenuBtn":
                         await closeMenu(interaction);
+                        break;
+                    case "showTimesQuotedLeaderboardBtn":
+                        await showUserLeaderboards(interaction, "quotedCount");
+                        break;
+                    case "showRecorderLeaderboardBtn":
+                        await showUserLeaderboards(interaction, "sentByCount");
+                        break;
+                    case "showUserFunnyLeaderboardBtn":
+                        await showUserLeaderboards(interaction, "funnyRank");
+                        break;
+                    case "showUserCursedLeaderboardBtn":
+                        await showUserLeaderboards(interaction, "cursedRank");
                         break;
                 }
             }
@@ -127,7 +139,7 @@ async function sendQuoteVote(interaction)
     if(userStats.lastQuote >= quotesLength)
     {
         //TODO: Do end of list functionality
-        userStats.lastQuote = 0; //Temp reset so nothing breaks
+        userStats.lastQuote = 0; //Placeholder functionality, reset the quote list to beginning
     }
 
     userJson.users[interaction.user.globalName] = userStats; //Updates the core json after all is done
@@ -180,7 +192,6 @@ async function sendQuoteVote(interaction)
 
 async function castVote(interaction, funnyRank, cursedRank, quoteKey)
 {
-    //TODO: Update UserStats object
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
 
     //Potential optimization, don't write to json every vote (time based backup?)
@@ -225,7 +236,6 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         await writeToJsonFile("UserStats.json", userJson);
     }
 
-
     //Loads the channel into the cache, prevents crash on user interacting with buttons after re launch of the bot
     await interaction.client.channels.fetch(interaction.message.channelId)
     await interaction.message.delete(); //This will delete the original action row, preventing multi voting
@@ -267,11 +277,68 @@ async function markQuoteError(interaction, quote)
     //TODO: BUTTONS TO ADD: Confirm / cancel
 }
 
-async function showUserStats(interaction, statToShow)
+async function showUserLeaderboards(interaction, statToShow)
 {
-    //TODO: add functionality
+    /* STEPS
+    * 1: Gather user stats
+    * 2: set sort parameters
+    * 3: Sort user stats
+    * 4: Display
+    */
 
-    //TODO: BUTTONS TO ADD: Hide stats
+    interaction.deferReply({content: `Gathering leaderboard...`});
+
+    //Acquire the data and sort it accordingly
+    let userStats = require(path.join(dataPath, 'UserStats.json'));
+    let leaderboard = Object.values(userStats.users);
+    switch(statToShow)
+    {
+        case 'funnyRank':
+            leaderboard.sort((a, b) => a.funnyRank - b.funnyRank);
+            break;
+        case 'cursedRank':
+            leaderboard.sort((a, b) => a.cursedRank - b.cursedRank);
+            break;
+        case 'sentByCount':
+            leaderboard.sort((a, b) => a.sentByCount - b.sentByCount);
+            break;
+        case 'quotedCount':
+            leaderboard.sort((a, b) => a.quotedCount - b.quotedCount);
+            break;
+    }
+
+    //Display the message to the user
+    let messages = [""]
+    for(let i = 0; i < leaderboard.length; i++)
+    {
+        let message = `\n${i + 1}: ${leaderboard[i].userName}
+         ${statToShow} score: ${leaderboard[i][statToShow]}`;
+
+        //Checks the length of the last message sent, if it's over the maximum add to a new entry instead
+        if(messages[messages.length - 1].length + message.length >= 2000)
+        {
+            messages.push(message);
+        }
+        else
+        {
+            messages[messages.length - 1] += message;
+        }
+    }
+
+    //Send the message
+    const btn_HideMessage = new ButtonBuilder().setCustomId(`closeMenuBtn`).setLabel('Hide').setStyle(ButtonStyle.Danger);
+    const actRow_LeaderBoard = new ActionRowBuilder().addComponents(btn_HideMessage)
+    await interaction.client.channels.fetch(interaction.message.channelId)
+
+    for(let i = 0; i < messages.length; i++)
+    {
+        await interaction.user.send({
+            content: `${messages[i]}`,
+            components: [actRow_LeaderBoard]
+        })
+    }
+    await closeMenu(interaction); //Closes the previous menu
+    interaction.deleteReply(); //Removes the thinking message
 }
 
 //Controls the leaderboard menu
@@ -346,8 +413,6 @@ async function closeMenu(interaction)
 
 async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberToShow)
 {
-
-    //TODO: Cap single message at 2000 characters, setup to send multiple if over that
     let quoteJson = require(path.join(dataPath, 'Quotes.json'));
     let messages = [``];
     let leaderboard = [];
@@ -401,17 +466,19 @@ async function displayTopQuoteLeaderboard(interaction, leaderboardToUse, numberT
 async function initUserStats(user)
 {
     let userJson = require(path.join(dataPath, 'UserStats.json'));
-
     let userStats = {};
 
+    //Inits user json if undefined
     if(typeof userJson.users === 'undefined') //inits users if needed
     {
         userJson.users = {};
     }
 
+    //Inits specific user if they're undefined
     if(typeof userJson.users[user] === 'undefined') //inits userStats if needed, otherwise grab stats from JSON
     {
         userStats =  {
+            userName: user,
             sentByCount: 0,
             quotedCount: 0,
             funnyRank: 0,

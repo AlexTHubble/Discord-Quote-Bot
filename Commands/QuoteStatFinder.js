@@ -38,6 +38,7 @@ module.exports = {
             {
                 statsJson.users[quoteJson.quotes[key].sentBy] =
                     {
+                        userName: quoteJson.quotes[key].sentBy,
                         sentByCount: 1,
                         quotedCount: 0,
                         funnyRank: 0,
@@ -50,6 +51,7 @@ module.exports = {
             {
                 statsJson.users[quoteJson.quotes[key].mentionedUser] =
                     {
+                        userName: quoteJson.quotes[key].mentionedUser,
                         sentByCount: 1,
                         quotedCount: 0,
                         funnyRank: 0,
