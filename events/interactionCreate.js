@@ -316,16 +316,16 @@ async function showUserLeaderboards(interaction, statToShow)
     switch(statToShow)
     {
         case 'funnyRank':
-            leaderboard.sort((a, b) => a.funnyRank - b.funnyRank);
+            leaderboard.sort((a, b) => b.funnyRank - a.funnyRank);
             break;
         case 'cursedRank':
-            leaderboard.sort((a, b) => a.cursedRank - b.cursedRank);
+            leaderboard.sort((a, b) => b.cursedRank - a.cursedRank);
             break;
         case 'sentByCount':
-            leaderboard.sort((a, b) => a.sentByCount - b.sentByCount);
+            leaderboard.sort((a, b) => b.sentByCount - a.sentByCount);
             break;
         case 'quotedCount':
-            leaderboard.sort((a, b) => a.quotedCount - b.quotedCount);
+            leaderboard.sort((a, b) => b.quotedCount - a.quotedCount);
             break;
     }
 
