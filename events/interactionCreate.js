@@ -153,7 +153,7 @@ async function sendQuoteVote(interaction)
     //const btn_MarkError = new ButtonBuilder().setCustomId('markErrorBtn').setLabel('Mark Error').setStyle(ButtonStyle.Danger);
     const btn_ShowUserStats = new ButtonBuilder().setCustomId('showUserStatsBtn').setLabel('Show User Stats').setStyle(ButtonStyle.Secondary);
     const btn_ShowLeaderBoard = new ButtonBuilder().setCustomId('showLeaderboardBtn').setLabel('Leaderboards').setStyle(ButtonStyle.Secondary);
-    const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote, btn_MarkError, btn_ShowUserStats, btn_ShowLeaderBoard);
+    const actRow_Options = new ActionRowBuilder().addComponents(btn_NextQuote, btn_ShowUserStats, btn_ShowLeaderBoard);
 
     //Funny action row
     const btn_FunnyRank1 = new ButtonBuilder().setCustomId(`FRank 0:${currentQuote}`).setLabel('0').setStyle(ButtonStyle.Primary);
@@ -198,8 +198,6 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
     if(funnyRank !== cursedRank) //If they're equal then 0 was pressed, delete the message without adjusting scores
     {
         const quote = quoteJson.quotes[quoteKey];
-        quote.funnyRank += funnyRank;
-        quote.cursedRank += cursedRank;
 
         interaction.reply(`Thank you for voting on "${quote.quote}"
         **Said by:** ${quote.mentionedUser} 
@@ -207,10 +205,34 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
         ${(funnyRank > cursedRank) ? 'funny' : 'cursed'} rank is now ${(funnyRank > cursedRank) ? quote.funnyRank : quote.cursedRank}`);
 
         //Checks if the quote is already on the list, if not push it
-        if(!quoteJson.cursedLeader.includes(quote))
+        //Grabs the length of the larger of the two leaderboards
+        let length = ((quoteJson.cursedLeader.length > quoteJson.funnyLeader.length) ? quoteJson.cursedLeader.length : quoteJson.funnyLeader.length);
+        let cursedFound = false;
+        let funnyFound = false;
+
+        //Iterates through the leaderboards to check for duplicates
+        for(let i = 0; i < length; i++)
+        {
+            if(i < quoteJson.cursedLeader.length)
+            {
+                if(quoteJson.cursedLeader[i].quote === quote.quote)
+                    cursedFound = true;
+            }
+            if(i < quoteJson.funnyLeader.length)
+            {
+                if(quoteJson.funnyLeader[i].quote === quote.quote)
+                    funnyFound = true;
+            }
+        }
+
+        //Adds to the end of the leaderboard if not found already within
+        if(!cursedFound)
             quoteJson.cursedLeader.push(quote)
-        if(!quoteJson.funnyLeader.includes(quote))
+        if(!funnyFound)
             quoteJson.funnyLeader.push(quote)
+
+        quote.funnyRank += funnyRank;
+        quote.cursedRank += cursedRank;
 
         //Sorts the leader boards by respective rank
         quoteJson.funnyLeader.sort((a, b) => b.funnyRank - a.funnyRank);
@@ -221,6 +243,7 @@ async function castVote(interaction, funnyRank, cursedRank, quoteKey)
             quoteJson.funnyLeader.pop();
         if(quoteJson.cursedLeader.length > 100)
             quoteJson.cursedLeader.pop();
+
 
         await writeToJsonFile('Quotes.json', quoteJson);
 
