@@ -9,6 +9,37 @@ module.exports = {
     name: Events.MessageCreate,
     async execute(interaction)
     {
-        console.log('message create event fired')
+        //April fools' prank 2026, remove when finished
+        await censorFromList(interaction);
     },
 };
+
+
+async function censorFromList(interaction)
+{
+    let config = require('../Config.json');
+
+
+    //TODO: Delete when ready to unleash on gamer time
+    if(interaction.guildId === config['provingGroundID'])
+    {
+        let censorListJson = require(path.join(dataPath, 'censorList.json'));
+
+        let words = interaction.content.split(" ");
+        let updatedMessage = interaction.content;
+        let foundWords = [];
+        for (let word of words)
+        {
+            if(censorListJson[word[0]].includes(word))
+            {
+                foundWords.push(word);
+            }
+        }
+
+        if(foundWords.length > 0)
+        {
+            const replies = [``]
+
+        }
+    }
+}
