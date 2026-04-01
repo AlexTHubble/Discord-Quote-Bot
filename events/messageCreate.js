@@ -18,7 +18,7 @@ module.exports = {
 async function censorFromList(interaction)
 {
     let config = require('../Config.json');
-
+    const shameBoxID = "896857480137687100"
 
     //TODO: Delete when ready to unleash on gamer time
     if(interaction.guildId === config['provingGroundID'])
@@ -30,16 +30,22 @@ async function censorFromList(interaction)
         let foundWords = [];
         for (let word of words)
         {
-            if(censorListJson[word[0]].includes(word))
+            if(censorListJson[word[0]] !== undefined && !interaction.author.bot)
             {
-                foundWords.push(word);
+                if(censorListJson[word[0]].includes(word))
+                {
+                    foundWords.push(word);
+                }
             }
         }
 
         if(foundWords.length > 0)
         {
-            const replies = [``]
+            const replies = [`${interaction.author.globalName} how dare you say "${foundWords.join(' ')}"?`];
+            const randomReply = Math.floor(Math.random() * (replies.length));
 
+            interaction.reply(replies[randomReply]);
+            interaction.author.roles.add(shameBoxID)
         }
     }
 }
